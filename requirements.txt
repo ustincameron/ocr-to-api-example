@@ -1,0 +1,15 @@
+# requirements.txt
+fastapi
+httpx
+uvicorn[standard]
+SQLAlchemy
+psycopg2-binary
+python-dotenv
+python-multipart
+pytesseract
+pillow
+pdf2image
+pydantic-settings
+pytest
+ruff
+openai
