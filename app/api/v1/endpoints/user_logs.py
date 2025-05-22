@@ -7,6 +7,7 @@ from datetime import datetime
 
 router = APIRouter()
 
+
 @router.get("/", response_model=list[dict])
 def list_user_logs(db: Session = Depends(get_db)):
     logs = db.query(UserLog).order_by(UserLog.id.desc()).limit(100).all()
@@ -17,7 +18,9 @@ def list_user_logs(db: Session = Depends(get_db)):
             "path": log.path,
             "status_code": log.status_code,
             "duration": round(log.duration, 3),
-            "timestamp": log.timestamp.isoformat() if isinstance(log.timestamp, datetime) else log.timestamp,
+            "timestamp": log.timestamp.isoformat()
+            if isinstance(log.timestamp, datetime)
+            else log.timestamp,
             "ip": log.ip,
             "user_agent": log.user_agent,
         }

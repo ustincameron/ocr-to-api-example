@@ -10,7 +10,7 @@ def ensure_ollama_running():
     try:
         with socket.create_connection(("127.0.0.1", 11434), timeout=1):
             return True  # Already running
-    except:
+    except OSError:
         subprocess.Popen(
             ["ollama", "serve"],
             stdout=subprocess.DEVNULL,
@@ -22,7 +22,7 @@ def ensure_ollama_running():
                 time.sleep(0.5)
                 with socket.create_connection(("127.0.0.1", 11434), timeout=1):
                     return False  # We started it
-            except:
+            except OSError:
                 continue
         raise RuntimeError("Timed out waiting for Ollama to start")
 
@@ -62,7 +62,7 @@ Text:
         input=prompt,
         text=True,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        stderr=subprocess.PIPE,
     )
 
     if result.stderr:

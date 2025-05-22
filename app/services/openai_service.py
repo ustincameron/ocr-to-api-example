@@ -6,6 +6,7 @@ from app.config.settings import settings
 
 client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
 
+
 def parse_text_with_openai(text: str) -> dict | None:
     prompt = f"""
     You are an extraction-only engine.

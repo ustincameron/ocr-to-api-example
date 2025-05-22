@@ -103,3 +103,10 @@ MIT
 
 ```
 ```
+## Screenshots
+
+### 📤 Postman Upload Example
+![Postman Screenshot](screenshots/postman.png)
+
+### 📚 Swagger `/docs`
+![Swagger Screenshot](screenshots/swagger.png)

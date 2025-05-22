@@ -1,5 +1,4 @@
 # app/middleware/logging_middleware.py
-from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from app.db.session import SessionLocal
 from sqlalchemy import text

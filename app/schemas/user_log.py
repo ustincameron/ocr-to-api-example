@@ -2,6 +2,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 
+
 class UserLogRead(BaseModel):
     id: int
     method: str

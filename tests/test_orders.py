@@ -1,8 +1,6 @@
 # tests/test_orders.py
 from fastapi.testclient import TestClient
 from app.main import app
-from datetime import date
-import io
 
 client = TestClient(app)
 
@@ -15,11 +13,7 @@ def test_list_orders():
 
 def test_create_and_delete_order():
     # Create order
-    payload = {
-        "first_name": "John",
-        "last_name": "Doe",
-        "date_of_birth": "1980-01-01"
-    }
+    payload = {"first_name": "John", "last_name": "Doe", "date_of_birth": "1980-01-01"}
     create_resp = client.post("/api/v1/orders/", json=payload)
     assert create_resp.status_code == 200
     data = create_resp.json()
@@ -47,4 +41,3 @@ def test_upload_order_document():
     assert data["first_name"] == "Marie"
     assert data["last_name"] == "Curie"
     assert data["date_of_birth"] == "1900-12-05"
-
