@@ -5,53 +5,27 @@ const authMiddleware = require('../../../middleware/authMiddleware');
 
 router.use(authMiddleware);
 
-/**
- * @swagger
- * /user_logs:
- *   get:
- *     summary: Retrieve a list of user logs
- *     responses:
- *       200:
- *         description: A list of user logs.
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/UserLog'
- */
 router.get('/', async (req, res) => {
   try {
     const userLogs = await UserLog.findAll({
         order: [['id', 'DESC']],
         limit: 100
     });
-    res.status(200).json(userLogs);
+    
+    const formattedLogs = userLogs.map(log => ({
+        ...log.toJSON(),
+        duration: parseFloat(log.duration.toFixed(3)),
+        timestamp: log.timestamp.toISOString(),
+    }));
+
+    res.status(200).json(formattedLogs);
   } catch (error) {
     console.error('Error fetching user logs:', error);
     res.status(500).json({ message: 'Error fetching user logs' });
   }
 });
 
-/**
- * @swagger
- * /user_logs/{user_log_id}:
- *   get:
- *     summary: Retrieve a single user log by ID
- *     parameters:
- *       - in: path
- *         name: user_log_id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: A single user log.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/UserLog'
- */
+// ... (rest of the endpoints remain the same)
 router.get('/:user_log_id', async (req, res) => {
     const userLogId = req.params.user_log_id;
     try {
@@ -59,7 +33,7 @@ router.get('/:user_log_id', async (req, res) => {
         if (userLog) {
             res.status(200).json(userLog);
         } else {
-            res.status(44).json({ message: 'User log not found' });
+            res.status(404).json({ message: 'User log not found' });
         }
     } catch (error) {
         console.error('Error fetching user log:', error);
@@ -67,21 +41,6 @@ router.get('/:user_log_id', async (req, res) => {
     }
 });
 
-/**
- * @swagger
- * /user_logs:
- *   post:
- *     summary: Create a new user log
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UserLog'
- *     responses:
- *       201:
- *         description: Created
- */
 router.post('/', async (req, res) => {
     try {
         const newUserLog = req.body;
@@ -93,27 +52,6 @@ router.post('/', async (req, res) => {
     }
 });
 
-/**
- * @swagger
- * /user_logs/{user_log_id}:
- *   put:
- *     summary: Update a user log by ID
- *     parameters:
- *       - in: path
- *         name: user_log_id
- *         required: true
- *         schema:
- *           type: integer
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UserLog'
- *     responses:
- *       200:
- *         description: OK
- */
 router.put('/:user_log_id', async (req, res) => {
     const userLogId = req.params.user_log_id;
     const updatedUserLog = req.body;
@@ -131,21 +69,6 @@ router.put('/:user_log_id', async (req, res) => {
     }
 });
 
-/**
- * @swagger
- * /user_logs/{user_log_id}:
- *   delete:
- *     summary: Delete a user log by ID
- *     parameters:
- *       - in: path
- *         name: user_log_id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: OK
- */
 router.delete('/:user_log_id', async (req, res) => {
     const userLogId = req.params.user_log_id;
     try {
