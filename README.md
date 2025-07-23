@@ -1,5 +1,5 @@
 ````md
-# GenHealth Backend Assessment
+# OCR to API Example
 
 ## Overview
 A FastAPI-based backend for extracting structured data from uploaded PDF documents and performing CRUD on Orders.
@@ -33,8 +33,8 @@ make reset-db    # Drop and recreate the database
 git clone <repo-url>
 cd <repo>
 cp .env.example .env
-docker build -t genhealth-backend .
-docker run --env-file .env -p 8000:10000 genhealth-backend
+docker build -t ocr-to-api-example .
+docker run --env-file .env -p 8000:10000 ocr-to-api-example
 ```
 
 > Ensure your `.env` file includes a valid `DATABASE_URL` pointing to your PostgreSQL instance.
