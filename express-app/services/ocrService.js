@@ -1,5 +1,5 @@
 const { Poppler } = require("node-poppler");
-const { ocr } = require("node-tesseract-ocr");
+const { recognize } = require("node-tesseract-ocr");
 const path = require("path");
 const fs = require("fs").promises;
 const { execSync } = require("child_process");
@@ -44,7 +44,7 @@ async function extractTextFromPdf(pdfPath) {
 
     await poppler.pdfToCairo(pdfPath, outputPrefix, options);
 
-    const text = await ocr(imagePath, {
+    const text = await recognize(imagePath, {
       lang: "eng",
       oem: 1,
       psm: 3,
