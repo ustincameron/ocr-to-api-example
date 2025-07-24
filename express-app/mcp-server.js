@@ -1,4 +1,4 @@
-require('dotenv').config();
+const config = require('./config');
 const { McpServer } = require("@modelcontextprotocol/sdk/server/mcp.js");
 const { StdioServerTransport } = require("@modelcontextprotocol/sdk/server/stdio.js");
 const { z } = require("zod");
@@ -6,10 +6,8 @@ const fs = require("fs");
 const FormData = require("form-data");
 const logger = require('./config/logger');
 
-const API_BASE_URL = process.env.API_BASE_URL || "http://localhost";
-const API_PORT = process.env.PORT || 3000;
 const API_BEARER_TOKEN = process.env.API_BEARER_TOKEN; // Read the token from environment
-const mcpApiUrl = `${API_BASE_URL}:${API_PORT}/api/v1`;
+const mcpApiUrl = `${config.api.baseUrl}:${config.api.port}/api/v1`;
 
 const server = new McpServer({
   name: "express-app-mcp",
