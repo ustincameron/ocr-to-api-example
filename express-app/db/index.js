@@ -1,10 +1,19 @@
 const { Sequelize } = require('sequelize');
-const settings = require('../config/settings');
+const settings = require('../config');
 
-const sequelize = new Sequelize(settings.databaseUrl, {
-  dialect: 'postgres',
-  logging: settings.logging,
-});
+let sequelize;
+
+if (process.env.NODE_ENV === 'test') {
+  sequelize = new Sequelize('sqlite::memory:', {
+    dialect: 'sqlite',
+    logging: false,
+  });
+} else {
+  sequelize = new Sequelize(settings.databaseUrl, {
+    dialect: 'postgres',
+    logging: settings.logging,
+  });
+}
 
 const db = {};
 

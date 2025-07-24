@@ -123,7 +123,8 @@ router.post('/', async (req, res) => {
  *             $ref: '#/components/schemas/UserLog'
  *     responses:
  *       200:
-_ */
+ *         description: OK
+ */
 router.put('/:user_log_id', async (req, res) => {
     const userLogId = req.params.user_log_id;
     const updatedUserLog = req.body;

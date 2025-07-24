@@ -1,5 +1,5 @@
 const { SESClient, SendEmailCommand } = require("@aws-sdk/client-ses");
-const settings = require("../config/settings");
+const settings = require("../config");
 const { generateEmailTemplate } = require("../templates/emailTemplate");
 
 // Initialize the SES client

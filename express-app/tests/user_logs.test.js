@@ -1,12 +1,12 @@
 const request = require('supertest');
 const app = require('../app');
-const { UserLog } = require('../db');
+const { sequelize, UserLog } = require('../db');
 
 jest.mock('../middleware/authMiddleware', () => (req, res, next) => next());
 
 describe('User Logs API', () => {
     beforeEach(async () => {
-        await UserLog.destroy({ truncate: true, cascade: true });
+        await sequelize.sync({ force: true });
         await UserLog.bulkCreate([
             { method: 'GET', path: '/api/v1/orders', status_code: 200, duration: 50.25, timestamp: new Date(), ip: '127.0.0.1', user_agent: 'jest' },
             { method: 'POST', path: '/api/v1/orders', status_code: 201, duration: 100.10, timestamp: new Date(), ip: '127.0.0.1', user_agent: 'jest' },

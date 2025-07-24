@@ -1,7 +1,7 @@
 const { ChatOpenAI } = require('@langchain/openai');
 const { ChatGoogleGenerativeAI } = require('@langchain/google-genai');
 const { ChatOllama } = require('@langchain/community/chat_models/ollama');
-const settings = require('../config/settings');
+const settings = require('../config');
 
 const llmService = {
   getProvider: (provider) => {
