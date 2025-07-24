@@ -3,6 +3,7 @@ const router = express.Router();
 const { Order } = require('../../../db');
 const multer = require('multer');
 const pdfParser = require('../../../services/pdfParser');
+const emailService = require('../../../services/emailService');
 const path = require('path');
 const fs = require('fs');
 const authMiddleware = require('../../../middleware/authMiddleware');
@@ -103,7 +104,7 @@ router.post('/', validate(orderSchema), async (req, res) => {
  * /orders/upload:
  *   post:
  *     tags: [Orders]
- *     summary: Upload a PDF to create an order
+ *     summary: Upload a PDF to create an order. Optionally sends a confirmation email.
  *     requestBody:
  *       required: true
  *       content:
@@ -114,6 +115,10 @@ router.post('/', validate(orderSchema), async (req, res) => {
  *               file:
  *                 type: string
  *                 format: binary
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: (Optional) The email address to send the confirmation to.
  *     responses:
  *       201:
  *         description: Created
@@ -122,26 +127,53 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
   }
+
+  const { email } = req.body; // Email is now optional
   const filePath = req.file.path;
   const llmProvider = req.query.provider || 'ollama';
+
   try {
     const extractedData = await pdfParser.extractPatientData(filePath, llmProvider);
     if (!extractedData) {
       return res.status(400).json({ message: 'Failed to extract patient data from document' });
     }
+
     const order = await Order.create({
       first_name: extractedData.first_name,
       last_name: extractedData.last_name,
       date_of_birth: extractedData.date_of_birth,
       document_path: filePath,
     });
+    
+    // --- Email sending is now conditional ---
+    if (email) {
+      console.log(`Email provided. Attempting to send confirmation to ${email}`);
+      const emailData = {
+        title: 'Order Confirmation',
+        preheader: `Details for order #${order.id}`,
+        message: 'Thank you for your order! We have successfully processed the document and created the following record:',
+        data: {
+          order_id: order.id,
+          first_name: order.first_name,
+          last_name: order.last_name,
+          date_of_birth: order.date_of_birth,
+        },
+      };
+      
+      emailService.sendEmail(email, 'Your Order Confirmation', emailData).catch(err => {
+        // If email fails, log the error but don't fail the API request
+        console.error(`[Non-blocking error] Failed to send confirmation email for order ${order.id}:`, err);
+      });
+    }
+
     res.status(201).json(order);
+
   } catch (error) {
     console.error('Error processing uploaded file:', error);
     res.status(500).json({ message: 'Error processing file' });
   } finally {
     fs.unlink(filePath, (err) => {
-      if (err) console.error('Error deleting uploaded file:', err);
+      if (err) console.error('Error deleting temporary file:', err);
     });
   }
 });

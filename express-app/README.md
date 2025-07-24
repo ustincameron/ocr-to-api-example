@@ -11,9 +11,10 @@ The application is composed of two main parts that run concurrently:
 
 ## Features
 
-- **PDF Processing:** Upload a PDF to extract structured data (first name, last name, date of birth) using OCR and an LLM.
-- **Order Management:** Full CRUD (Create, Read, Update, Delete) functionality for Orders.
-- **Request Logging:** Automatically logs all HTTP requests to a `user_logs` table for auditing.
+- **PDF Processing:** Upload a PDF to extract structured data.
+- **Email Confirmation:** Automatically sends a confirmation email via AWS SES after an order is created.
+- **Order Management:** Full CRUD functionality for Orders.
+- **Request Logging:** Automatically logs all HTTP requests for auditing.
 - **Authentication:** API endpoints are protected via bearer token authentication.
 - **Database:** Uses PostgreSQL with Sequelize as the ORM.
 - **AI Integration:** Exposes API functionality as tools via the Model Context Protocol (MCP).
@@ -22,82 +23,70 @@ The application is composed of two main parts that run concurrently:
 
 ## Getting Started
 
-This project is designed to be run with Node.js.
-
 ### Prerequisites
 
 - **Node.js:** Version 20 or higher.
-- **Ollama:** This app uses [Ollama](https://ollama.com) and the `phi` model to extract patient fields from unstructured OCR'd PDFs. Ensure Ollama is installed and the `phi` model is pulled (`ollama pull phi`). Make sure the service is running in the background (`ollama serve`).
+- **Ollama:** Required for PDF data extraction. Ensure the `phi` model is pulled (`ollama pull phi`) and the service is running (`ollama serve`).
+- **AWS Account:** An AWS account with SES (Simple Email Service) configured.
+
+### Environment Variables
+
+Before running the application, you must configure your environment. You can create a `.env` file in the `express-app` directory with the following variables:
+
+```
+# server.js and database
+PORT=3000
+DATABASE_URL=postgresql://user:password@host:port/database
+BEARER_TOKEN=your-secret-api-token
+
+# services/llmService.js
+OPENAI_API_KEY=
+GEMINI_API_KEY=
+OLLAMA_API_URL=http://localhost:11434
+
+# services/emailService.js
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+EMAIL_FROM_ADDRESS=your-verified-sender@example.com
+```
 
 ### Installation and Running
 
-1.  **Navigate to the app directory:**
-    ```bash
-    cd express-app
-    ```
-
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-
-3.  **Start the application:**
-    ```bash
-    npm start
-    ```
-    This single command uses `concurrently` to launch both the Express API and the MCP server. You will see logs from both servers in your terminal.
+1.  **Navigate to the app directory:** `cd express-app`
+2.  **Install dependencies:** `npm install`
+3.  **Start the application:** `npm start`
 
 ---
 
 ## API Endpoints
 
-The REST API is available for standard HTTP requests. **All endpoints require a valid Bearer Token in the `Authorization` header.**
+All endpoints require a valid Bearer Token.
 
-- `GET /api/v1/orders/` – List all orders
-- `POST /api/v1/orders/` – Create an order manually
-- `PUT /api/v1/orders/:order_id` – Update an order
-- `DELETE /api/v1/orders/:order_id` – Delete an order
-- `POST /api/v1/orders/upload` – Upload a PDF to create an order
-- `GET /api/v1/user-logs/` – List recent user request logs
+- `POST /api/v1/orders/upload` – Upload a PDF and an email address to create an order and send a confirmation.
+- ... (and all other existing endpoints)
 
 ---
 
 ## AI (MCP) Integration with Cursor
 
-To connect the application's tools to an AI IDE like Cursor, you need to create a configuration file.
-
-### 1. Create `mcp.json`
-
-Create a file named `mcp.json` in the **root of the entire project repository**.
+Create an `mcp.json` file in the project root to connect to Cursor.
 
 ```json
 {
   "mcpServers": {
     "express-app-mcp": {
       "command": "/absolute/path/to/node",
-      "args": ["/absolute/path/to/your/project/express-app/mcp-server.js"],
+      "args": ["/absolute/path/to/project/express-app/mcp-server.js"],
       "env": {
         "PORT": "3000",
-        "API_BEARER_TOKEN": "your-secret-token-here"
+        "API_BEARER_TOKEN": "your-secret-api-token"
       }
     }
   }
 }
 ```
-
-### 2. Configure Paths and Token
-
-You **must** replace the placeholder values:
-
-- **`command` and `args`**: Use the absolute paths for your Node executable and the `mcp-server.js` script.
-- **`API_BEARER_TOKEN`**: Replace `"your-secret-token-here"` with the actual bearer token required by the Express API's `authMiddleware`.
-
-### 3. Use the Tools
-
-With the `mcp.json` file configured and the application running (`npm start`), you can now securely use the following prompts in Cursor:
-
-- `list all orders`
-- `create an order from the pdf at /path/to/my-document.pdf`
+**Note:** Ensure the `API_BEARER_TOKEN` in `mcp.json` matches the `BEARER_TOKEN` in your `.env` file.
 
 ---
 ## Screenshots
