@@ -8,8 +8,9 @@ const path = require('path');
 const fs = require('fs');
 const authMiddleware = require('../../../middleware/authMiddleware');
 const validate = require('../../../middleware/validate');
-const { orderSchema } = require('../../../schemas/order');
+const { orderSchema, orderReadSchema } = require('../../../schemas/order');
 const logger = require('../../../config/logger');
+const responseMiddleware = require('../../../middleware/responseMiddleware');
 
 const upload = multer({ dest: 'uploads/' });
 
@@ -32,7 +33,7 @@ router.use(authMiddleware);
  *       200:
  *         description: A list of orders.
  */
-router.get('/', async (req, res) => {
+router.get('/', responseMiddleware(orderReadSchema), async (req, res) => {
     try {
       const orders = await Order.findAll();
       res.status(200).json(orders);
@@ -58,7 +59,7 @@ router.get('/', async (req, res) => {
  *       200:
  *         description: A single order.
  */
-router.get('/:order_id', async (req, res) => {
+router.get('/:order_id', responseMiddleware(orderReadSchema), async (req, res) => {
     const orderId = req.params.order_id;
     try {
         const order = await Order.findByPk(orderId);

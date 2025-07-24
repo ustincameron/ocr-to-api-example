@@ -3,6 +3,8 @@ const router = express.Router();
 const { UserLog } = require('../../../db');
 const authMiddleware = require('../../../middleware/authMiddleware');
 const logger = require('../../../config/logger');
+const { userLogReadSchema } = require('../../../schemas/user_log');
+const responseMiddleware = require('../../../middleware/responseMiddleware');
 
 router.use(authMiddleware);
 
@@ -23,7 +25,7 @@ router.use(authMiddleware);
  *       200:
  *         description: A list of user logs.
  */
-router.get('/', async (req, res) => {
+router.get('/', responseMiddleware(userLogReadSchema), async (req, res) => {
   try {
     const userLogs = await UserLog.findAll({
         order: [['id', 'DESC']],
@@ -59,7 +61,7 @@ router.get('/', async (req, res) => {
  *       200:
  *         description: A single user log.
  */
-router.get('/:user_log_id', async (req, res) => {
+router.get('/:user_log_id', responseMiddleware(userLogReadSchema), async (req, res) => {
     const userLogId = req.params.user_log_id;
     try {
         const userLog = await UserLog.findByPk(userLogId);
@@ -121,8 +123,7 @@ router.post('/', async (req, res) => {
  *             $ref: '#/components/schemas/UserLog'
  *     responses:
  *       200:
- *         description: OK
- */
+_ */
 router.put('/:user_log_id', async (req, res) => {
     const userLogId = req.params.user_log_id;
     const updatedUserLog = req.body;
