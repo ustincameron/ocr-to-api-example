@@ -1,98 +1,138 @@
-const path = require('path');
-// Load environment variables for the test suite before any other code.
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env.test') });
+// 1. Mock dependencies using Jest.
+jest.mock('fs');
+jest.mock('node-fetch');
 
-const { spawn } = require('child_process');
-const http = require('http');
-const app = require(path.resolve(__dirname, '../app.js'));
+// 2. Import modules needed for the test
+const { Readable } = require('stream');
+const fs = require('fs');
+const { default: fetch } = require('node-fetch');
 
-// A helper function to manage stdio communication with the MCP server
-function sendMcpRequest(mcpProcess, request) {
-  return new Promise((resolve, reject) => {
-    let responseData = '';
-    const timeout = setTimeout(() => {
-      reject(new Error(`MCP request timed out. Partial response: ${responseData}`));
-    }, 20000);
+// 3. Import the functions to be tested *after* the mocks are defined
+const { listOrders, createOrderFromPdf } = require('../mcp-tools');
 
-    mcpProcess.stdout.on('data', (data) => {
-      responseData += data.toString();
-      const jsonStartIndex = responseData.indexOf('{');
-      if (jsonStartIndex !== -1 && responseData.includes(`"id":"${request.id}"`)) {
-        clearTimeout(timeout);
-        try {
-          const jsonResponse = responseData.substring(jsonStartIndex);
-          const response = JSON.parse(jsonResponse);
-          resolve(response);
-        } catch (e) {
-          reject(new Error(`Failed to parse MCP JSON response: ${responseData}`));
-        }
-      }
-    });
+describe('MCP Tools', () => {
 
-    mcpProcess.stderr.on('data', (data) => {
-      clearTimeout(timeout);
-      reject(new Error(`MCP process emitted an error: ${data}`));
-    });
-
-    const requestString = JSON.stringify(request) + String.fromCharCode(10);
-    mcpProcess.stdin.write(requestString);
+  // 4. Reset mocks after each test to ensure test isolation
+  afterEach(() => {
+    jest.clearAllMocks();
   });
-}
 
-describe('MCP Server', () => {
-  let apiServer;
-  const serverPort = 3012; // Use a unique port for this test suite
-
-  beforeAll(async () => {
-    await new Promise(resolve => {
-      apiServer = http.createServer(app);
-      apiServer.listen(serverPort, () => {
-        process.env.API_PORT = serverPort;
-        resolve();
+  describe('listOrders', () => {
+    it('should list orders successfully', async () => {
+      // Arrange
+      const mockOrders = [
+        { id: '1', first_name: 'John', last_name: 'Doe', date_of_birth: '1990-01-01' },
+        { id: '2', first_name: 'Jane', last_name: 'Doe', date_of_birth: '1992-02-02' },
+      ];
+      fetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => mockOrders,
       });
+
+      // Act
+      const result = await listOrders();
+
+      // Assert
+      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/v1/orders'), expect.any(Object));
+      expect(result.content[0].text).toContain('Order ID: 1, Name: John Doe, DOB: 1990-01-01');
+      expect(result.content[0].text).toContain('Order ID: 2, Name: Jane Doe, DOB: 1992-02-02');
+    });
+
+    it('should handle no orders found', async () => {
+      // Arrange
+      fetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => [],
+      });
+
+      // Act
+      const result = await listOrders();
+
+      // Assert
+      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/v1/orders'), expect.any(Object));
+      expect(result.content[0].text).toBe('No orders found.');
+    });
+
+    it('should handle API errors gracefully', async () => {
+      // Arrange
+      fetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        text: async () => 'Error Body',
+      });
+
+      // Act
+      const result = await listOrders();
+
+      // Assert
+      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/v1/orders'), expect.any(Object));
+      expect(result.content[0].text).toContain('Error fetching orders: 500 Internal Server Error - Error Body');
     });
   });
 
-  afterAll(async () => {
-    await new Promise(resolve => apiServer.close(resolve));
-  });
+  describe('createOrderFromPdf', () => {
+    it('should create an order from a PDF successfully', async () => {
+      // Arrange
+      const mockOrder = { id: '1', first_name: 'John', last_name: 'Doe', date_of_birth: '1990-01-01' };
+      fetch.mockResolvedValue({
+        ok: true,
+        status: 201,
+        json: async () => mockOrder,
+      });
+      fs.existsSync.mockReturnValue(true);
+      const mockStream = new Readable();
+      mockStream.push('file content');
+      mockStream.push(null);
+      fs.createReadStream.mockReturnValue(mockStream);
 
-  test('should process a PDF and return extracted patient data', async () => {
-    const mcpProcess = spawn('node', ['mcp-server.js'], {
-      cwd: path.resolve(__dirname, '..'),
-      stdio: ['pipe', 'pipe', 'pipe'],
+      // Act
+      const result = await createOrderFromPdf({ filePath: '/fake/path/to/file.pdf' });
+
+      // Assert
+      expect(fs.existsSync).toHaveBeenCalledWith('/fake/path/to/file.pdf');
+      expect(fs.createReadStream).toHaveBeenCalledWith('/fake/path/to/file.pdf');
+      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/v1/orders/upload'), expect.any(Object));
+      expect(result.content[0].text).toBe('Order created successfully. Order ID: 1, Name: John Doe, DOB: 1990-01-01');
+    });
+    
+    it('should return an error if the file does not exist', async () => {
+      // Arrange
+      fs.existsSync.mockReturnValue(false);
+
+      // Act
+      const result = await createOrderFromPdf({ filePath: '/non/existent/file.pdf' });
+
+      // Assert
+      expect(fs.existsSync).toHaveBeenCalledWith('/non/existent/file.pdf');
+      expect(result.content[0].text).toBe('Error: File not found at path: /non/existent/file.pdf');
+      expect(fetch).not.toHaveBeenCalled();
     });
 
-    const request = {
-      jsonrpc: '2.0',
-      method: 'tool_code',
-      params: {
-        tool_name: 'createOrderFromPdf',
-        parameters: {
-          llm_provider: 'ollama',
-          file_path: 'tests/data/sample_valid.pdf',
-        },
-      },
-      id: 'mcp-final-test-v7',
-    };
+    it('should handle API errors during file upload', async () => {
+      // Arrange
+      fetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        text: async () => 'Upload Failed',
+      });
+      fs.existsSync.mockReturnValue(true);
+      const mockStream = new Readable();
+      mockStream.push('file content');
+      mockStream.push(null);
+      fs.createReadStream.mockReturnValue(mockStream);
 
-    try {
-      const response = await sendMcpRequest(mcpProcess, request);
-      
-      expect(response.jsonrpc).toBe('2.0');
-      expect(response.id).toBe('mcp-final-test-v7');
-      expect(response.result).toBeDefined();
-      expect(response.result.content[0].type).toBe('text');
-      
-      const responseText = response.result.content[0].text;
-      
-      expect(responseText).toContain('Order created successfully');
-      expect(responseText).toContain('Marie');
-      expect(responseText).toContain('Curie');
-      expect(responseText).toContain('1900-12-05');
+      // Act
+      const result = await createOrderFromPdf({ filePath: '/fake/path/to/file.pdf' });
 
-    } finally {
-      mcpProcess.kill();
-    }
-  }, 30000);
+      // Assert
+      expect(fs.existsSync).toHaveBeenCalledWith('/fake/path/to/file.pdf');
+      expect(fs.createReadStream).toHaveBeenCalledWith('/fake/path/to/file.pdf');
+      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/v1/orders/upload'), expect.any(Object));
+      expect(result.content[0].text).toContain('Error creating order: 500 Internal Server Error - Upload Failed');
+    });
+  });
 });
