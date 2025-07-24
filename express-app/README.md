@@ -6,7 +6,7 @@ This project is a comprehensive backend service built with Express.js. It is a p
 
 The application is composed of two main parts that run concurrently:
 
-1.  **Express.js REST API:** A robust API for performing CRUD operations on Orders and logging user activity.
+1.  **Express.js REST API:** A robust API for performing CRUD operations on Orders and logging user activity. All endpoints are protected and require a bearer token.
 2.  **MCP Server:** A protocol server that wraps the Express API, exposing its key features as callable "tools" for AI environments like Cursor.
 
 ## Features
@@ -14,6 +14,7 @@ The application is composed of two main parts that run concurrently:
 - **PDF Processing:** Upload a PDF to extract structured data (first name, last name, date of birth) using OCR and an LLM.
 - **Order Management:** Full CRUD (Create, Read, Update, Delete) functionality for Orders.
 - **Request Logging:** Automatically logs all HTTP requests to a `user_logs` table for auditing.
+- **Authentication:** API endpoints are protected via bearer token authentication.
 - **Database:** Uses PostgreSQL with Sequelize as the ORM.
 - **AI Integration:** Exposes API functionality as tools via the Model Context Protocol (MCP).
 
@@ -50,7 +51,7 @@ This project is designed to be run with Node.js.
 
 ## API Endpoints
 
-The REST API is available for standard HTTP requests.
+The REST API is available for standard HTTP requests. **All endpoints require a valid Bearer Token in the `Authorization` header.**
 
 - `GET /api/v1/orders/` – List all orders
 - `POST /api/v1/orders/` – Create an order manually
@@ -76,26 +77,24 @@ Create a file named `mcp.json` in the **root of the entire project repository**.
       "command": "/absolute/path/to/node",
       "args": ["/absolute/path/to/your/project/express-app/mcp-server.js"],
       "env": {
-        "PORT": "3000"
+        "PORT": "3000",
+        "API_BEARER_TOKEN": "your-secret-token-here"
       }
     }
   }
 }
 ```
 
-### 2. Configure Absolute Paths
+### 2. Configure Paths and Token
 
-You **must** replace the placeholder paths in the `command` and `args` fields with the correct absolute paths for your system.
+You **must** replace the placeholder values:
 
-- **To find the Node path:**
-  - On macOS/Linux: `which node`
-  - On Windows: `where node`
-- **To find the server path:**
-  - Navigate to the project root in your terminal and run `pwd` (or `cd` on Windows). Append `/express-app/mcp-server.js` to the result.
+- **`command` and `args`**: Use the absolute paths for your Node executable and the `mcp-server.js` script.
+- **`API_BEARER_TOKEN`**: Replace `"your-secret-token-here"` with the actual bearer token required by the Express API's `authMiddleware`.
 
 ### 3. Use the Tools
 
-With the `mcp.json` file configured and the application running (`npm start`), you can use the following prompts in Cursor:
+With the `mcp.json` file configured and the application running (`npm start`), you can now securely use the following prompts in Cursor:
 
 - `list all orders`
 - `create an order from the pdf at /path/to/my-document.pdf`
@@ -104,7 +103,7 @@ With the `mcp.json` file configured and the application running (`npm start`), y
 ## Screenshots
 
 ### 📤 Postman Upload Example
-![Postman Screenshot](../../screenshots/postman.png)
+![Postman Screenshot](../screenshots/postman.png)
 
 ### 📚 Swagger `/docs`
-![Swagger Screenshot](../../screenshots/swagger.png)
+![Swagger Screenshot](../screenshots/swagger.png)

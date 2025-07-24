@@ -7,6 +7,7 @@ const FormData = require("form-data");
 
 const API_BASE_URL = process.env.API_BASE_URL || "http://localhost";
 const API_PORT = process.env.PORT || 3000;
+const API_BEARER_TOKEN = process.env.API_BEARER_TOKEN; // Read the token from environment
 const mcpApiUrl = `${API_BASE_URL}:${API_PORT}/api/v1`;
 
 const server = new McpServer({
@@ -17,13 +18,27 @@ const server = new McpServer({
 // Use a dynamic import for node-fetch
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
+const getHeaders = (form = null) => {
+  const headers = {};
+  if (API_BEARER_TOKEN) {
+    headers['Authorization'] = `Bearer ${API_BEARER_TOKEN}`;
+  }
+  if (form) {
+    return { ...headers, ...form.getHeaders() };
+  }
+  headers['Content-Type'] = 'application/json';
+  return headers;
+};
+
 server.tool(
   "listOrders",
   "List all orders in the system",
   {},
   async () => {
     try {
-      const response = await fetch(`${mcpApiUrl}/orders`);
+      const response = await fetch(`${mcpApiUrl}/orders`, {
+        headers: getHeaders(),
+      });
       if (!response.ok) {
         const errorText = await response.text();
         return { content: [{ type: "text", text: `Error fetching orders: ${response.status} ${response.statusText} - ${errorText}` }] };
@@ -65,6 +80,7 @@ server.tool(
       const response = await fetch(`${mcpApiUrl}/orders/upload`, {
         method: "POST",
         body: form,
+        headers: getHeaders(form),
       });
 
       if (!response.ok) {
