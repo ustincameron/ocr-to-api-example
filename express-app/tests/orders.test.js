@@ -2,9 +2,14 @@ const request = require('supertest');
 const app = require('../app');
 const { sequelize } = require('../db');
 
-// NO MOCKS. This is a true end-to-end test.
-
 jest.mock('../middleware/authMiddleware', () => (req, res, next) => next());
+jest.mock('../services/pdfParser', () => ({
+  extractPatientData: jest.fn().mockResolvedValue({
+    first_name: 'Marie',
+    last_name: 'Curie',
+    date_of_birth: '1900-12-05',
+  }),
+}));
 
 describe('Orders API', () => {
   beforeEach(async () => {
