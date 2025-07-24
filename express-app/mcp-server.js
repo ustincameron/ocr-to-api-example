@@ -4,6 +4,7 @@ const { StdioServerTransport } = require("@modelcontextprotocol/sdk/server/stdio
 const { z } = require("zod");
 const fs = require("fs");
 const FormData = require("form-data");
+const logger = require('./config/logger');
 
 const API_BASE_URL = process.env.API_BASE_URL || "http://localhost";
 const API_PORT = process.env.PORT || 3000;
@@ -58,7 +59,7 @@ server.tool(
         ],
       };
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       return { content: [{ type: "text", text: `Failed to fetch from the Express API: ${err.message}` }] };
     }
   }
@@ -99,7 +100,7 @@ server.tool(
         ],
       };
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       return { content: [{ type: "text", text: `Failed to create order from PDF: ${err.message}` }] };
     }
   }
@@ -109,9 +110,9 @@ async function main() {
   try {
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.log("MCP Server connected and listening for tools.");
+    logger.info("MCP Server connected and listening for tools.");
   } catch (error) {
-    console.error("Failed to start MCP Server:", error);
+    logger.error("Failed to start MCP Server:", error);
     process.exit(1);
   }
 }

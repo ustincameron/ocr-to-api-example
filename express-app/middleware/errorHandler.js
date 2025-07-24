@@ -1,5 +1,7 @@
+const logger = require('../config/logger');
+
 const errorHandler = (err, req, res, next) => {
-  console.error('An error occurred:', err); // Log the error
+  logger.error('An error occurred:', err); // Log the error
 
   const statusCode = err.statusCode || 500; // Use the error's status code or default to 500
   const message = err.message || 'Internal Server Error'; // Use the error's message or a generic one

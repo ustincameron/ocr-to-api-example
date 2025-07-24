@@ -1,5 +1,6 @@
 // Load environment variables from a .env file
 require('dotenv').config();
+const logger = require('./logger');
 
 const settings = {
   databaseUrl: process.env.DATABASE_URL || 'postgresql://user:password@host:port/database',
@@ -20,6 +21,7 @@ const settings = {
     fromAddress: process.env.EMAIL_FROM_ADDRESS,
     // Add other email settings like a 'reply-to' address if needed
   },
+  logging: (msg) => logger.debug(msg),
 };
 
 module.exports = settings;

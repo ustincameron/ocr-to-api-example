@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { UserLog } = require('../../../db');
 const authMiddleware = require('../../../middleware/authMiddleware');
+const logger = require('../../../config/logger');
 
 router.use(authMiddleware);
 
@@ -37,7 +38,7 @@ router.get('/', async (req, res) => {
 
     res.status(200).json(formattedLogs);
   } catch (error) {
-    console.error('Error fetching user logs:', error);
+    logger.error('Error fetching user logs:', error);
     res.status(500).json({ message: 'Error fetching user logs' });
   }
 });
@@ -68,7 +69,7 @@ router.get('/:user_log_id', async (req, res) => {
             res.status(404).json({ message: 'User log not found' });
         }
     } catch (error) {
-        console.error('Error fetching user log:', error);
+        logger.error('Error fetching user log:', error);
         res.status(500).json({ message: 'Error fetching user log' });
     }
 });
@@ -95,7 +96,7 @@ router.post('/', async (req, res) => {
         const userLog = await UserLog.create(newUserLog);
         res.status(201).json(userLog);
     } catch (error) {
-        console.error('Error creating user log:', error);
+        logger.error('Error creating user log:', error);
         res.status(500).json({ message: 'Error creating user log' });
     }
 });
@@ -134,7 +135,7 @@ router.put('/:user_log_id', async (req, res) => {
             res.status(404).json({ message: 'User log not found' });
         }
     } catch (error) {
-        console.error('Error updating user log:', error);
+        logger.error('Error updating user log:', error);
         res.status(500).json({ message: 'Error updating user log' });
     }
 });
@@ -166,7 +167,7 @@ router.delete('/:user_log_id', async (req, res) => {
             res.status(404).json({ message: 'User log not found' });
         }
     } catch (error) {
-        console.error('Error deleting user log:', error);
+        logger.error('Error deleting user log:', error);
         res.status(500).json({ message: 'Error deleting user log' });
     }
 });

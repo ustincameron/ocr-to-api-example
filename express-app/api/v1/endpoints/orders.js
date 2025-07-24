@@ -9,6 +9,7 @@ const fs = require('fs');
 const authMiddleware = require('../../../middleware/authMiddleware');
 const validate = require('../../../middleware/validate');
 const { orderSchema } = require('../../../schemas/order');
+const logger = require('../../../config/logger');
 
 const upload = multer({ dest: 'uploads/' });
 
@@ -36,7 +37,7 @@ router.get('/', async (req, res) => {
       const orders = await Order.findAll();
       res.status(200).json(orders);
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      logger.error('Error fetching orders:', error);
       res.status(500).json({ message: 'Error fetching orders' });
     }
 });
@@ -67,7 +68,7 @@ router.get('/:order_id', async (req, res) => {
             res.status(404).json({ message: 'Order not found' });
         }
     } catch (error) {
-        console.error('Error fetching order:', error);
+        logger.error('Error fetching order:', error);
         res.status(500).json({ message: 'Error fetching order' });
     }
 });
@@ -94,7 +95,7 @@ router.post('/', validate(orderSchema), async (req, res) => {
         const order = await Order.create(newOrder);
         res.status(201).json(order);
     } catch (error) {
-        console.error('Error creating order:', error);
+        logger.error('Error creating order:', error);
         res.status(500).json({ message: 'Error creating order' });
     }
 });
@@ -147,7 +148,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     
     // --- Email sending is now conditional ---
     if (email) {
-      console.log(`Email provided. Attempting to send confirmation to ${email}`);
+      logger.info(`Email provided. Attempting to send confirmation to ${email}`);
       const emailData = {
         title: 'Order Confirmation',
         preheader: `Details for order #${order.id}`,
@@ -162,18 +163,18 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       
       emailService.sendEmail(email, 'Your Order Confirmation', emailData).catch(err => {
         // If email fails, log the error but don't fail the API request
-        console.error(`[Non-blocking error] Failed to send confirmation email for order ${order.id}:`, err);
+        logger.error(`[Non-blocking error] Failed to send confirmation email for order ${order.id}:`, err);
       });
     }
 
     res.status(201).json(order);
 
   } catch (error) {
-    console.error('Error processing uploaded file:', error);
+    logger.error('Error processing uploaded file:', error);
     res.status(500).json({ message: 'Error processing file' });
   } finally {
     fs.unlink(filePath, (err) => {
-      if (err) console.error('Error deleting temporary file:', err);
+      if (err) logger.error('Error deleting temporary file:', err);
     });
   }
 });
@@ -212,7 +213,7 @@ router.put('/:order_id', validate(orderSchema), async (req, res) => {
             res.status(404).json({ message: 'Order not found' });
         }
     } catch (error) {
-        console.error('Error updating order:', error);
+        logger.error('Error updating order:', error);
         res.status(500).json({ message: 'Error updating order' });
     }
 });
@@ -244,7 +245,7 @@ router.delete('/:order_id', async (req, res) => {
             res.status(404).json({ message: 'Order not found' });
         }
     } catch (error) {
-        console.error('Error deleting order:', error);
+        logger.error('Error deleting order:', error);
         res.status(500).json({ message: 'Error deleting order' });
     }
 });
