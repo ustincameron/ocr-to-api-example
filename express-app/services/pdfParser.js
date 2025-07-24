@@ -1,9 +1,9 @@
-const { HumanMessage } = require('langchain/schema');
+const { HumanMessage } = require('@langchain/core/messages');
+const { JsonOutputParser } = require('@langchain/core/output_parsers');
 const ocrService = require('./ocrService');
-const llmService =require('./llmService');
+const llmService = require('./llmService');
 const { z } = require('zod');
 
-// 1. Define the schema for our "tool" using Zod. This is our structured output.
 const patientDataSchema = z.object({
   first_name: z.string().describe("The patient's first name"),
   last_name: z.string().describe("The patient's last name"),
@@ -15,13 +15,10 @@ const extractPatientData = async (filePath, llmProvider) => {
     const text = await ocrService.extractTextFromPdf(filePath);
     const model = llmService.getProvider(llmProvider);
 
-    // 2. Bind the tool to the model and force it to be called.
-    // This is the implementation of the "ANY" mode from your documentation.
-    const modelWithTool = model.withstructuredOutput(patientDataSchema, {
+    const modelWithTool = model.withStructuredOutput(patientDataSchema, {
       name: 'patient_data_extractor',
     });
     
-    // 3. Invoke the chain. The prompt is now much simpler.
     const prompt = `Extract the patient data from the following text:
 
 ${text}`;

@@ -8,6 +8,17 @@ const options = {
       version: '1.0.0',
       description: 'API documentation for the Express.js order and user log application',
     },
+    // Add tags to define the categories
+    tags: [
+      {
+        name: 'Orders',
+        description: 'API for managing orders',
+      },
+      {
+        name: 'User Logs',
+        description: 'API for viewing user activity logs',
+      },
+    ],
     servers: [
       {
         url: '/api/v1',

@@ -5,6 +5,23 @@ const authMiddleware = require('../../../middleware/authMiddleware');
 
 router.use(authMiddleware);
 
+/**
+ * @swagger
+ * tags:
+ *   name: User Logs
+ *   description: API for viewing user activity logs
+ */
+
+/**
+ * @swagger
+ * /user_logs:
+ *   get:
+ *     tags: [User Logs]
+ *     summary: Retrieve a list of user logs
+ *     responses:
+ *       200:
+ *         description: A list of user logs.
+ */
 router.get('/', async (req, res) => {
   try {
     const userLogs = await UserLog.findAll({
@@ -25,7 +42,22 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ... (rest of the endpoints remain the same)
+/**
+ * @swagger
+ * /user_logs/{user_log_id}:
+ *   get:
+ *     tags: [User Logs]
+ *     summary: Retrieve a single user log by ID
+ *     parameters:
+ *       - in: path
+ *         name: user_log_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: A single user log.
+ */
 router.get('/:user_log_id', async (req, res) => {
     const userLogId = req.params.user_log_id;
     try {
@@ -41,6 +73,22 @@ router.get('/:user_log_id', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /user_logs:
+ *   post:
+ *     tags: [User Logs]
+ *     summary: Create a new user log
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserLog'
+ *     responses:
+ *       201:
+ *         description: Created
+ */
 router.post('/', async (req, res) => {
     try {
         const newUserLog = req.body;
@@ -52,6 +100,28 @@ router.post('/', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /user_logs/{user_log_id}:
+ *   put:
+ *     tags: [User Logs]
+ *     summary: Update a user log by ID
+ *     parameters:
+ *       - in: path
+ *         name: user_log_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserLog'
+ *     responses:
+ *       200:
+ *         description: OK
+ */
 router.put('/:user_log_id', async (req, res) => {
     const userLogId = req.params.user_log_id;
     const updatedUserLog = req.body;
@@ -69,6 +139,22 @@ router.put('/:user_log_id', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /user_logs/{user_log_id}:
+ *   delete:
+ *     tags: [User Logs]
+ *     summary: Delete a user log by ID
+ *     parameters:
+ *       - in: path
+ *         name: user_log_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: OK
+ */
 router.delete('/:user_log_id', async (req, res) => {
     const userLogId = req.params.user_log_id;
     try {
