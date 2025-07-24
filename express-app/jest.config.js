@@ -33,4 +33,7 @@ module.exports = {
   transform: {
     "^.+\.(t|j)sx?$": ["@swc/jest"],
   },
+  moduleNameMapper: {
+    'node-fetch': '<rootDir>/tests/mocks/node-fetch.js',
+  },
 };
