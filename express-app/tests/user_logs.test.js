@@ -12,6 +12,10 @@ describe('User Logs API', () => {
             { method: 'POST', path: '/api/v1/orders', status_code: 201, duration: 100.10, timestamp: new Date(), ip: '127.0.0.1', user_agent: 'jest' },
         ]);
     });
+
+    afterAll(async () => {
+        await sequelize.close();
+    });
     
     test('GET /api/v1/user_logs should return all user logs', async () => {
         const response = await request(app).get('/api/v1/user_logs');

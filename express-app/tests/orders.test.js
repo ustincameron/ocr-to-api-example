@@ -1,11 +1,9 @@
 const request = require('supertest');
 const app = require('../app');
 const { sequelize } = require('../db');
-const pdfParser = require('../services/pdfParser');
 
-jest.mock('../services/pdfParser', () => ({
-  extractPatientData: jest.fn(),
-}));
+// NO MOCKS. This is a true end-to-end test.
+
 jest.mock('../middleware/authMiddleware', () => (req, res, next) => next());
 
 describe('Orders API', () => {
@@ -33,7 +31,7 @@ describe('Orders API', () => {
     const createResponse = await request(app)
       .post('/api/v1/orders')
       .send(newOrder);
-    
+
     expect(createResponse.statusCode).toBe(201);
     const createdOrder = createResponse.body;
     expect(createdOrder.first_name).toBe(newOrder.first_name);
@@ -45,25 +43,21 @@ describe('Orders API', () => {
     expect(deleteResponse.statusCode).toBe(204);
 
     const listResponse = await request(app).get('/api/v1/orders');
-    const ids = listResponse.body.map(item => item.id);
+    const ids = listResponse.body.map((item) => item.id);
     expect(ids).not.toContain(orderId);
   });
 
-  test('POST /api/v1/orders/upload should create an order from a PDF', async () => {
-    pdfParser.extractPatientData.mockResolvedValue({
-      first_name: 'Marie',
-      last_name: 'Curie',
-      date_of_birth: '1867-11-07',
-    });
-
+  // This is a long-running, true end-to-end test. Timeout is set to 60 seconds.
+  test('POST /api/v1/orders/upload should create an order from a real PDF using the full OCR and LLM pipeline', async () => {
     const response = await request(app)
-      .post('/api/v1/orders/upload')
+      .post('/api/v1/orders/upload?provider=ollama') // Use the local ollama provider
       .attach('file', 'tests/data/sample_valid.pdf');
 
     expect(response.statusCode).toBe(201);
-    expect(response.body).toHaveProperty('id');
-    expect(response.body.first_name).toBe('Marie');
-    expect(response.body.last_name).toBe('Curie');
-    expect(response.body.date_of_birth).toBe('1867-11-07');
-  });
+    const order = response.body;
+    expect(order).toHaveProperty('id');
+    expect(order.first_name).toBe('Marie');
+    expect(order.last_name).toBe('Curie');
+    expect(order.date_of_birth).toBe('1900-12-05');
+  }, 60000); // 60-second timeout
 });
